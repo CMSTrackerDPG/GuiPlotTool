@@ -6,7 +6,7 @@ This tool is ment to Merge and Superimpose plots from DQMData.
 
 # UI Overview
 
-![UI Overview](https://raw.githubusercontent.com/imKuehlschrank/GuiPlotTool/master/doc/img/overview.png)
+![UI Overview](https://raw.githubusercontent.com/imKuehlschrank/GuiPlotTool/master/doc/img/guiOverview.png)
 
 
 # Example Workflow
