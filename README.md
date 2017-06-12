@@ -1,12 +1,12 @@
 # Goal
 This tool is ment to Merge and Superimpose plots from DQMData.
 
-![UI Overview](http://imgur.com/P5Y2XAb.png)
+![goal](https://raw.githubusercontent.com/imKuehlschrank/GuiPlotTool/master/doc/img/goal.png)
 
 
 # UI Overview
 
-![UI Overview](http://imgur.com/UKwvsn2.png)
+![UI Overview](https://raw.githubusercontent.com/imKuehlschrank/GuiPlotTool/master/doc/img/overview.png)
 
 
 # Example Workflow
@@ -14,11 +14,11 @@ This tool is ment to Merge and Superimpose plots from DQMData.
 Let us assume we are interest in the 'on track clusters of TID PLUS' in the rings 1,2, and 3.
 We start by opening the run file in which we are interested.
 
-![Load Dialog](http://imgur.com/kV7cLHG.png)
+![Load Dialog](https://raw.githubusercontent.com/imKuehlschrank/GuiPlotTool/master/doc/img/loadDialog.png)
 
 The ROOT file has been loaded. The List Area should now contain lots of files. You can take a quick peek at one of the files by double clicking it, which puts it in the Current Selection Area. Click the 'Preview List' button to show a plot a the current selection.
 
-![Preview](http://imgur.com/8ECdVCJ.png)
+![Preview](https://raw.githubusercontent.com/imKuehlschrank/GuiPlotTool/master/doc/img/preview.png)
 
 To remove the file from the current selection just double click it.
 
@@ -30,7 +30,7 @@ Select all the plots.
 Check 'Pub. Style', 'Show stats, and 'Use Custom Title', and enter the string 'My Cool Plots' in the text field.
 Click on 'Superimpose'.
 
-![Superimpose](http://imgur.com/aQXH7gJ.png)
+![Superimpose](https://raw.githubusercontent.com/imKuehlschrank/GuiPlotTool/master/doc/img/superimpose.png)
 
 You successfully compared the plots of the reference run to the current run.
 
