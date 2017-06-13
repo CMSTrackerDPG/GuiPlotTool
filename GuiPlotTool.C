@@ -92,13 +92,12 @@ private:
     TGCheckButton* displayPathCheckBox;
     TGCheckButton* tdrstyleCheckBox;
     TGCheckButton* statsCheckBox;
+    TGCheckButton* legendCheckBox;
     TGCheckButton* renameCheckbox;
     TGCheckButton* xRangeCheckbox;
     TGCheckButton* yRangeCheckbox;
 
-    TCanvas* previewCanvas = nullptr;
     TCanvas* resultCanvas = nullptr;
-
     TStyle* current_style = nullptr;
 
     // File Stuff
@@ -181,9 +180,11 @@ MyMainFrame::MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h) {
 
     tdrstyleCheckBox = new TGCheckButton(controlFrameCheckboxes, "Pub. Style");
     statsCheckBox    = new TGCheckButton(controlFrameCheckboxes, "Show Stats");
+    legendCheckBox   = new TGCheckButton(controlFrameCheckboxes, "Show Legend");
 
     controlFrameCheckboxes->AddFrame(tdrstyleCheckBox, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 3, 4));
     controlFrameCheckboxes->AddFrame(statsCheckBox,    new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 3, 4));
+    controlFrameCheckboxes->AddFrame(legendCheckBox,   new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 3, 4));
 
         // ------- Output Buttons
     TGVerticalFrame* outputControlFrameButtons = new TGVerticalFrame(controlFrame, 200, 40);
@@ -327,6 +328,7 @@ void MyMainFrame::ResetGuiElements() {
 
     displayPathCheckBox->SetState(kButtonUp);
     statsCheckBox->SetState(kButtonUp);
+    legendCheckBox->SetState(kButtonUp);
     tdrstyleCheckBox->SetState(kButtonUp);
 
     SetStyle();
@@ -336,6 +338,7 @@ void MyMainFrame::InitAll() {
     ResetGuiElements();
 
     string file_name = LoadFileFromDialog();
+//    string file_name = "/home/fil/projects/GuiPlotTool/tmp/DQM_V0001_SiStrip_R000283283.root";
     file = TFile::Open(file_name.c_str());
 
     if(file) {
@@ -434,12 +437,14 @@ void MyMainFrame::FilterBySearchBox() {
 }
 
 void MyMainFrame::PreviewSelection() {
-    previewCanvas = new TCanvas("Preview Canvas", "", 800, 400);
-    previewCanvas->Divide(selection.size(), 1);
+    if(resultCanvas) delete resultCanvas;
+
+    resultCanvas = new TCanvas("Preview Canvas", "", 800, 400);
+    resultCanvas->Divide(selection.size(), 1);
 
     Int_t i = 1;
     for (auto& elem : selection) {
-        previewCanvas->cd(i++);
+        resultCanvas->cd(i++);
         elem.second.GetObj()->Draw();
     }
 }
@@ -526,6 +531,15 @@ void MyMainFrame::DrawPlots(vector<TH1*>& plots, vector<TPaveStats*>& statboxes,
             idx++;
         }
     }
+
+    if(legendCheckBox->IsOn()) {
+        auto legend = new TLegend(0.1,0.7,0.48,0.9);
+        for(auto& elem : plots) {
+            string name = elem->GetTitle();
+            legend->AddEntry(elem,name.c_str());
+        }
+        legend->Draw();
+    }
 }
 
 void MyMainFrame::Superimpose() {
@@ -541,7 +555,6 @@ void MyMainFrame::Superimpose() {
     }
 
     vector<TPaveStats*> statboxes; // out param
-
 
     CalcSuperimpose(copies, statboxes);
     DrawPlots(copies, statboxes, "same");
@@ -568,6 +581,12 @@ void MyMainFrame::MergeSelection() {
         SetCheckboxOptions(copies[0]);
         copies[0]->Draw();
     }
+
+    if(legendCheckBox->IsOn()) {
+        auto legend = new TLegend(0.1,0.7,0.48,0.9);
+        legend->AddEntry(copies[0],"test");
+        legend->Draw();
+    }
 }
 
 void MyMainFrame::SetStyle() {
@@ -579,16 +598,13 @@ void MyMainFrame::SetStyle() {
 }
 
 void MyMainFrame::InitStyles() {
-
     if(current_style == nullptr) {
         if(tdrstyleCheckBox->IsOn()){
-//            TODO: effectively disables PubStyle
-//            current_style = new TStyle("tdrStyle","Style for P-TDR");
-//            SetPublicationStyle(current_style);
+            current_style = new TStyle("tdrStyle","Style for P-TDR");
+            SetPublicationStyle(current_style);
         } else {
             current_style = new TStyle("Modern","");
         }
-
     }
     current_style->cd();
 }
