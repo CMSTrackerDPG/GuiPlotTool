@@ -65,8 +65,8 @@ public:
 
     void SetPublicationStyle(TStyle* style);
 
-    void SetCheckboxOptions(TH1* elem, TLegend* leg);
-    void CalcSuperimpose(vector<TH1*>& plots, vector<TPaveStats*>& statboxes);
+    void SetCheckboxOptions(TH1* elem);
+    void CreateStatBoxes(vector<TH1*>& plots, vector<TPaveStats*>& statboxes);
     void DrawPlots(vector<TH1*>& plots, vector<TPaveStats*>& statboxes, string option="");
 
 private:
@@ -93,6 +93,7 @@ private:
     TGCheckButton* tdrstyleCheckBox;
     TGCheckButton* statsCheckBox;
     TGCheckButton* legendCheckBox;
+    TGCheckButton* normalizeCheckBox; // Only when superimposing
     TGCheckButton* renameCheckbox;
     TGCheckButton* xRangeCheckbox;
     TGCheckButton* yRangeCheckbox;
@@ -178,13 +179,15 @@ MyMainFrame::MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h) {
         // ------- Checkboxes
     TGVerticalFrame* controlFrameCheckboxes = new TGVerticalFrame(controlFrame, 200, 80);
 
-    tdrstyleCheckBox = new TGCheckButton(controlFrameCheckboxes, "Pub. Style");
-    statsCheckBox    = new TGCheckButton(controlFrameCheckboxes, "Show Stats");
-    legendCheckBox   = new TGCheckButton(controlFrameCheckboxes, "Show Legend");
+    tdrstyleCheckBox  = new TGCheckButton(controlFrameCheckboxes, "Pub. Style");
+    statsCheckBox     = new TGCheckButton(controlFrameCheckboxes, "Show Stats");
+    legendCheckBox    = new TGCheckButton(controlFrameCheckboxes, "Show Legend");
+    normalizeCheckBox = new TGCheckButton(controlFrameCheckboxes, "Normalize");
 
-    controlFrameCheckboxes->AddFrame(tdrstyleCheckBox, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 3, 4));
-    controlFrameCheckboxes->AddFrame(statsCheckBox,    new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 3, 4));
-    controlFrameCheckboxes->AddFrame(legendCheckBox,   new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 3, 4));
+    controlFrameCheckboxes->AddFrame(tdrstyleCheckBox,  new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 3, 4));
+    controlFrameCheckboxes->AddFrame(statsCheckBox,     new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 3, 4));
+    controlFrameCheckboxes->AddFrame(legendCheckBox,    new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 3, 4));
+    controlFrameCheckboxes->AddFrame(normalizeCheckBox, new TGLayoutHints(kLHintsLeft | kLHintsExpandX, 5, 5, 3, 4));
 
         // ------- Output Buttons
     TGVerticalFrame* outputControlFrameButtons = new TGVerticalFrame(controlFrame, 200, 40);
@@ -274,6 +277,9 @@ MyMainFrame::MyMainFrame(const TGWindow *p, UInt_t w, UInt_t h) {
     fMain->MapWindow();
     fMain->MoveResize(100, 100, 520, 700);
     ResetGuiElements();
+
+//    InitAll();
+//    searchBox->SetText("NumberOfClusters");
 }
 
 MyMainFrame::~MyMainFrame() {
@@ -329,6 +335,7 @@ void MyMainFrame::ResetGuiElements() {
     displayPathCheckBox->SetState(kButtonUp);
     statsCheckBox->SetState(kButtonUp);
     legendCheckBox->SetState(kButtonUp);
+    normalizeCheckBox->SetState(kButtonUp);
     tdrstyleCheckBox->SetState(kButtonUp);
 
     SetStyle();
@@ -442,15 +449,28 @@ void MyMainFrame::PreviewSelection() {
     resultCanvas = new TCanvas("Preview Canvas", "", 800, 400);
     resultCanvas->Divide(selection.size(), 1);
 
+    // never work on the originals - they are still on disk (file)
+    vector<TH1*> copies;
+    copies.clear();
+
+    for(auto& elem : selection){
+        copies.push_back((TH1*)elem.second.GetObj()->Clone());
+    }
+
     Int_t i = 1;
-    for (auto& elem : selection) {
+    for (auto& elem : copies) {
         resultCanvas->cd(i++);
-        elem.second.GetObj()->Draw();
+
+        if(normalizeCheckBox->IsOn()) {
+            elem->DrawNormalized();
+        } else {
+            elem->Draw();
+        }
     }
 }
 
 // statboxes : OUT param
-void MyMainFrame::CalcSuperimpose(vector<TH1*>& plots, vector<TPaveStats*>& statboxes) {
+void MyMainFrame::CreateStatBoxes(vector<TH1*>& plots, vector<TPaveStats*>& statboxes) {
     TPaveStats* tstat;
     double X1, Y1, X2, Y2;
 
@@ -482,19 +502,14 @@ void MyMainFrame::CalcSuperimpose(vector<TH1*>& plots, vector<TPaveStats*>& stat
 
 }
 
-void MyMainFrame::SetCheckboxOptions(TH1* elem, TLegend* leg) {
+void MyMainFrame::SetCheckboxOptions(TH1* elem) {
     if(xRangeCheckbox->IsOn()) {
         elem->SetAxisRange(xminNumbertextbox->GetNumber(), xmaxNumbertextbox->GetNumber(),"X");
     }
 
     if(yRangeCheckbox->IsOn()) {
         elem->SetAxisRange(yminNumbertextbox->GetNumber(), ymaxNumbertextbox->GetNumber(),"Y");
-    }
-
-    if(legendCheckBox->IsOn()) {
-        string legendDispName = elem->GetTitle();
-        leg->AddEntry(elem, legendDispName.c_str());
-    }
+    }    
 
     if(renameCheckbox->IsOn()) {
         string tmp = renameTextbox->GetText();
@@ -519,11 +534,19 @@ void MyMainFrame::DrawPlots(vector<TH1*>& plots, vector<TPaveStats*>& statboxes,
     for(auto c : basic_colors) colors.push_back(c-9);
 
     auto legend = new TLegend(0.1,0.7,0.48,0.9);
+
     Int_t idx = 0;
     for(auto& elem : plots) {
         elem->SetLineColor(colors[idx]);
-        SetCheckboxOptions(elem, legend);
-        elem->Draw(option.c_str());
+        legend->AddEntry(elem, elem->GetTitle());
+        SetCheckboxOptions(elem);
+
+        if(normalizeCheckBox->IsOn()) {
+            elem->DrawNormalized(option.c_str());
+        } else {
+            elem->Draw(option.c_str());
+        }
+
         idx++;
     }
 
@@ -551,13 +574,16 @@ void MyMainFrame::Superimpose() {
 
     // never work on the originals - they are still on disk (file)
     vector<TH1*> copies;
+    copies.clear();
+
     for(auto& elem : selection){
         copies.push_back((TH1*)elem.second.GetObj()->Clone());
     }
 
     vector<TPaveStats*> statboxes; // out param
+    statboxes.clear();
 
-    CalcSuperimpose(copies, statboxes);
+    CreateStatBoxes(copies, statboxes);
     DrawPlots(copies, statboxes, "same");
 
 }
@@ -570,6 +596,8 @@ void MyMainFrame::MergeSelection() {
 
     // never work on the originals - they are still on disk (file)
     vector<TH1*> copies;
+    copies.clear();
+
     for(auto& elem : selection){
         copies.push_back((TH1*)elem.second.GetObj()->Clone());
     }
@@ -581,7 +609,7 @@ void MyMainFrame::MergeSelection() {
             copies[0]->Add(copies[idx]);
         }
 
-        SetCheckboxOptions(copies[0], legend);
+        SetCheckboxOptions(copies[0]);
         copies[0]->Draw();
     }
 
