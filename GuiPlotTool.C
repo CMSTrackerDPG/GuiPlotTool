@@ -65,7 +65,7 @@ public:
 
     void SetPublicationStyle(TStyle* style);
 
-    void SetCheckboxOptions(TH1* elem);
+    void SetCheckboxOptions(TH1* elem, TLegend* leg);
     void CalcSuperimpose(vector<TH1*>& plots, vector<TPaveStats*>& statboxes);
     void DrawPlots(vector<TH1*>& plots, vector<TPaveStats*>& statboxes, string option="");
 
@@ -482,13 +482,18 @@ void MyMainFrame::CalcSuperimpose(vector<TH1*>& plots, vector<TPaveStats*>& stat
 
 }
 
-void MyMainFrame::SetCheckboxOptions(TH1* elem) {
+void MyMainFrame::SetCheckboxOptions(TH1* elem, TLegend* leg) {
     if(xRangeCheckbox->IsOn()) {
         elem->SetAxisRange(xminNumbertextbox->GetNumber(), xmaxNumbertextbox->GetNumber(),"X");
     }
 
     if(yRangeCheckbox->IsOn()) {
         elem->SetAxisRange(yminNumbertextbox->GetNumber(), ymaxNumbertextbox->GetNumber(),"Y");
+    }
+
+    if(legendCheckBox->IsOn()) {
+        string legendDispName = elem->GetTitle();
+        leg->AddEntry(elem, legendDispName.c_str());
     }
 
     if(renameCheckbox->IsOn()) {
@@ -513,10 +518,11 @@ void MyMainFrame::DrawPlots(vector<TH1*>& plots, vector<TPaveStats*>& statboxes,
     for(auto c : basic_colors) colors.push_back(c-4);
     for(auto c : basic_colors) colors.push_back(c-9);
 
+    auto legend = new TLegend(0.1,0.7,0.48,0.9);
     Int_t idx = 0;
     for(auto& elem : plots) {
         elem->SetLineColor(colors[idx]);
-        SetCheckboxOptions(elem);
+        SetCheckboxOptions(elem, legend);
         elem->Draw(option.c_str());
         idx++;
     }
@@ -533,11 +539,6 @@ void MyMainFrame::DrawPlots(vector<TH1*>& plots, vector<TPaveStats*>& statboxes,
     }
 
     if(legendCheckBox->IsOn()) {
-        auto legend = new TLegend(0.1,0.7,0.48,0.9);
-        for(auto& elem : plots) {
-            string name = elem->GetTitle();
-            legend->AddEntry(elem,name.c_str());
-        }
         legend->Draw();
     }
 }
@@ -573,18 +574,18 @@ void MyMainFrame::MergeSelection() {
         copies.push_back((TH1*)elem.second.GetObj()->Clone());
     }
 
+    auto legend = new TLegend(0.1,0.7,0.48,0.9);
+
     if(copies.size() != 0) {
         for(Int_t idx=1; idx<copies.size(); ++idx) {
             copies[0]->Add(copies[idx]);
         }
 
-        SetCheckboxOptions(copies[0]);
+        SetCheckboxOptions(copies[0], legend);
         copies[0]->Draw();
     }
 
     if(legendCheckBox->IsOn()) {
-        auto legend = new TLegend(0.1,0.7,0.48,0.9);
-        legend->AddEntry(copies[0],"test");
         legend->Draw();
     }
 }
