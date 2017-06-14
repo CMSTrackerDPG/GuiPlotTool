@@ -1,5 +1,5 @@
 # Goal
-This tool is ment to Merge and Superimpose plots from DQMData.
+This tool is meant to Merge and Superimpose plots from DQMData.
 
 ![goal](https://raw.githubusercontent.com/imKuehlschrank/GuiPlotTool/master/doc/img/goal.png)
 
@@ -27,8 +27,8 @@ Now we will make use of the quicksearch box at the top. Type "OnTrack__TID__PLUS
 Selecting the "Display Path" checkbox enables us to see the complete file names of the plots. We see that it is not actually duplicates but files that are in the 'Reference' folder and the 'Current Run' folder.
 Select all the plots.
 
-Check 'Pub. Style', 'Show stats, and 'Use Custom Title', and enter the string 'My Cool Plots' in the text field.
-Click on 'Superimpose'.
+Check 'Pub. Style', 'Show stats', 'Show legend', and 'Use Custom Title', and enter the string 'My Cool Plots' in the text field.
+Click on 'Superimpose'. To change the legend text right click on the legend's text you want to change and select 'Set Entry Label' and enter it there.
 
 ![Superimpose](https://raw.githubusercontent.com/imKuehlschrank/GuiPlotTool/master/doc/img/superimpose.png)
 
